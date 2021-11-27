@@ -10,7 +10,7 @@ from scoreboard import Scoreboard
 from screens import Screens
 from ship import Ship
 from bullet import Bullet
-from alien import Alien
+from enemy import Alien, AlienBullet, Asteroid
 
 class SpaceShooter:
     '''Overall class to manage the game.'''
@@ -32,9 +32,9 @@ class SpaceShooter:
         # Game Elements
         self.ship = Ship(self) # Creates a ship.
         self.bullets = [] # List to store bullets fired by the ship.
-        self.aliens = [] # List to store aliens on screen.
-
-        self._create_alien() # Create aliens.
+        self.aliens = [] # List to store aliens.
+        self.alien_bullets = [] # List to store bullets shot by aliens.
+        self.asteroids = [] # List to store asteroids.
 
         self.screens = Screens(self) # Creates an instance to display the start screen and background.
 
@@ -47,6 +47,8 @@ class SpaceShooter:
                 self.ship.update() # Updates the position of the ship.
                 self._update_bullets() # Updates the position of the bullets on the screen.
                 self._update_aliens() # Updates the position of the aliens on the screen.
+                self._update_alien_bullets() # Updates the position of the alien bullets on the screen.
+                self._update_asteroids() # Update the position of the asteroids on the screen.
 
             self._update_screen() # Redraw each frame on the screen.
 
@@ -61,8 +63,8 @@ class SpaceShooter:
         self.scoreboard.prep_lives() # Prepapre number of lives to be displayed.
         self.aliens.clear() # Empties the aliens list.
         self.bullets.clear() # Empties the bullets list.
-
-        self._create_alien() # Creates alien.
+        self.asteroids.clear() # Empties the asteroids list.
+        self.alien_bullets.clear() # Empties the alien bullets list.
         self.ship.center_ship() # Centers the ship.
 
         pygame.mouse.set_visible(False) # Hides the mouse cursor in the window.
@@ -148,8 +150,9 @@ class SpaceShooter:
 
             self.aliens.clear() # Empties the aliens list.
             self.bullets.clear() # Empties the bullets list.
+            self.alien_bullets.clear() # Empties the alien bullets list.
+            self.asteroids.clear() # Empties the asteroids list.
 
-            self._create_alien() # Creates new aliens.
             self.ship.center_ship() # Recenter the ship.
 
             sleep(0.5) # Pause the game for 0.5 seconds.
@@ -163,6 +166,40 @@ class SpaceShooter:
             if pygame.Rect.colliderect(alien.rect, self.ship.rect): # Checks if the alien collides with the ship.
                 self._ship_hit() # Resets the game for a new round.
                 break 
+
+    def _check_ship_alien_bullets_collision(self):
+        '''Responds to an alien bullet and the ship colliding'''
+        for alien_bullet in self.alien_bullets: # Loops through each bullet shot by the alien.
+            if pygame.Rect.colliderect(alien_bullet.rect, self.ship.rect): # Checks if the alien bullet collides with the ship.
+                self._ship_hit() # Resets the game for a new round.
+                break
+
+    def _check_asteroid_ship_collision(self):
+        '''Responds to an asteroid and the ship colliding.'''
+        for asteroid in self.asteroids: # Loops through each asteroid.
+            if pygame.Rect.colliderect(asteroid.rect, self.ship.rect): # Checks if the asteroid collides with the ship.
+                self._ship_hit() # Resets the game for a new round.
+                break
+
+    def _check_bullet_asteroid_collision(self):
+        '''Responds to a bullet-asteroid collision.'''
+        for asteroid in self.asteroids: # Loops through each asteroid.
+            for bullet in self.bullets: # Loops through each bullet.
+                if pygame.Rect.colliderect(bullet.rect, asteroid.rect): # Checks if a bullet collides with the asteroid.
+                    self.bullets.remove(bullet) # Removes the bullet.
+                    self.asteroids.remove(asteroid) # Removes the asteroid.
+                    self.stats.score += self.settings.asteroid_points # Increments the score when an asteroid is shot.
+                    self.scoreboard.prep_score() # Prepares the score with the new value.
+                    self.scoreboard.check_high_score() # Checks if the score is a new high score.
+                    self._speed_up() # Speeds up the game if the a new level is reached.
+                    break 
+
+    def _check_asteroid_bottom(self):
+        '''Checks is an alien reaches the bottom of the screen.'''
+        for asteroid in self.asteroids: # Loop through each asteroid.
+            if asteroid.rect.bottom >= self.window_rect.bottom: # Checks if an alien reaches the bottom of the screen.
+                self._ship_hit() # Resets the game for a new round.
+                break
 
     def _check_aliens_bottom(self):
         '''Checks if an alien reaches the bottom of the screen.'''
@@ -187,20 +224,43 @@ class SpaceShooter:
             self._check_bullet_alien_collision(bullet) # Checks if the bullet hits the alien.
 
     def _update_aliens(self):
-        '''Updates the position of the aliens.'''
-        if random.randint(1, self.settings.alien_probability) == 1: # Checks if the random number is 1.
-            self._create_alien() # Randomly creates an alien.
+        '''Updates the position of the aliens and create new ones.'''
+        if random.randint(1, self.settings.alien_probability) == 1: # Randomly create an alien.
+            alien = Alien(self) # Create an alien.
+            self.aliens.append(alien) # Adds alien to the aliens list.
 
         for alien in self.aliens: # Loop through each alien.
             alien.update() # Updates the position of the alien.
-        
+            if alien.shoot(): # If the alien shoot a bullet.
+                x, y = alien.get_alien_bullet_coordinates() # Obtain the starting position of the bullet.
+                alien_bullet = AlienBullet(self, x, y) # Creates an instance of the bullet.
+                self.alien_bullets.append(alien_bullet) # Adds the bullet to the alien bullets list.
+
         self._check_ship_alien_collision() # Check if an alien collides with the ship.
         self._check_aliens_bottom() # Checks if an alien reaches the bottom of the screen.
 
-    def _create_alien(self):
-        '''Create a new alien and adds it to the alien list.'''
-        alien = Alien(self) # Creates alien.
-        self.aliens.append(alien) # Adds alien to the aliens list.
+    def _update_alien_bullets(self):
+        '''Updates the position of the alien bullets.'''
+        for alien_bullet in self.alien_bullets: # Loops through each bullet shot by the alien.
+            alien_bullet.update() # Updates the position of the bullet.
+            
+            if alien_bullet.rect.top >= self.window_rect.height: # Checks if the bullet reaches the bottom of the screen.
+                self.alien_bullets.remove(alien_bullet) # Removes the bullet from the alien bullet list.
+
+        self._check_ship_alien_bullets_collision() # Checks if a bullet shot by the alien collides with the ship.
+
+    def _update_asteroids(self):
+        '''Updates the position of the asteroids and create new ones.'''
+        if random.randint(1, self.settings.asteroid_probability) == 1: # Randomly creates an asteroid.
+            asteroid = Asteroid(self) # Create an asteroid
+            self.asteroids.append(asteroid) # Adds asteroid to the asteroid list.
+
+        for asteroid in self.asteroids: # Loop through each asteroid.
+            asteroid.update() # Updates the position of the asteroid.
+
+        self._check_asteroid_ship_collision() # Checks if an asteroid collides with the ship.
+        self._check_bullet_asteroid_collision() # Checks if an asteroid is shot.
+        self._check_asteroid_bottom() # Checks if an asteroid reaches the bottom of the screen.
 
     def _update_screen(self):
         '''Redraws each frame of the screen.''' 
@@ -210,8 +270,14 @@ class SpaceShooter:
             for bullet in self.bullets: # Loops through each bullet.
                 bullet.draw() # Draw bullet.
 
+            for asteroid in self.asteroids: # Loops through each asteroid.
+                asteroid.draw() # Draws asteroid.
+
             for alien in self.aliens: # Loops through each alien.
-                alien.draw() # Draw alien
+                alien.draw() # Draw alien.
+
+            for alien_bullet in self.alien_bullets: # Loops through each bullet shot by the alien.
+                alien_bullet.draw() # Draws alienbullet.
 
             self.ship.draw() # Draw ship.
             self.scoreboard.show_score() # Draw score, high score, level and lives.
