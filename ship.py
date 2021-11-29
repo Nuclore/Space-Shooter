@@ -9,7 +9,7 @@ class Ship:
 		self.window_rect = self.window.get_rect() # Obtains the rect for the game window.
 		self.settings = game.settings # Accesses the game window.
 
-		self.image = pygame.image.load('assets/images/ship.png') # Loads the ship image.
+		self.image = pygame.image.load('assets/images/player/ship.png') # Loads the ship image.
 	
 		# Gets the rectangle of the ship image, which is used for collision detection.
 		# The rect object contains attributes such as: x, y, width, height, left, right, top, bottom.

@@ -7,8 +7,9 @@ class GameStats:
 		self.reset_stats() # Reset the game statistics.
 
 		self.game_active = False # Starts the game in an inactive state.
+		self.game_over = False # Set to True when the player has no more ships left.
 
-		self.high_score = 0 # High score should never be reset.
+		self.high_score = 0 # High score of the game.
 		
 	def reset_stats(self):
 		'''Initialize statistics that can change during the game.'''

@@ -43,7 +43,8 @@ class SpaceShooter:
         while True:
             self._check_events() # Check for any keyboard or mouse interactions.
 
-            if self.stats.game_active: # Checks if the game is an active state.
+             # Checks if the game is active and the game_over flag is set to False.
+            if self.stats.game_active and not self.stats.game_over:
                 self.ship.update() # Updates the position of the ship.
                 self._update_bullets() # Updates the position of the bullets on the screen.
                 self._update_aliens() # Updates the position of the aliens on the screen.
@@ -58,6 +59,7 @@ class SpaceShooter:
         self.settings.initialize_dynamic_settings() # Sets dynamic settings for game.
         self.stats.reset_stats() # Reset game statistics.
         self.stats.game_active = True # Starts the game in an active state.
+        self.stats.game_over = False # Sets the game_over flag to False.
         self.scoreboard.prep_score() # Prepares score to be displayed.
         self.scoreboard.prep_level() # Prepares level number to be displayed.
         self.scoreboard.prep_lives() # Prepapre number of lives to be displayed.
@@ -81,14 +83,19 @@ class SpaceShooter:
                     self._check_keyup_events(event)
                 elif event.type == pygame.MOUSEBUTTONDOWN: # Checks if the mouse button was clicked.
                     mouse_pos = pygame.mouse.get_pos() # Gets the position of the mouse cursor as a tuple.
-                    self._check_play_button(mouse_pos) # Checks if the play button was clicked.
+                    self._check_play_button(mouse_pos) # Checks if the Play button or Play Again button was clicked.
 
     def _check_play_button(self, mouse_pos):
-        '''Starts the a new game when the player clicks the Play button.'''
-        button_clicked = self.screens.play_button_rect.collidepoint(mouse_pos) # Returns True if the play button was clicked.
-        if button_clicked and not self.stats.game_active: # Checks if the play button was clicked and the game is active.
+        '''Starts the a new game when the player clicks the Play button or Play Again Button.'''
+        if self.stats.game_over: # Checks if the game is over.
+            button_clicked = self.screens.play_again_button_rect.collidepoint(mouse_pos) # Returns True if the Play Again button was clicked.
+        else: # If the game is not over.
+            button_clicked = self.screens.play_button_rect.collidepoint(mouse_pos) # Returns True if the Play button was clicked.
+
+        # Checks if the Play button or Play Again button was clicked and the game is not active.
+        if button_clicked and not self.stats.game_active: 
             self._start_game() # Reset the game settings for a new game.
-           
+        
     def _check_keydown_events(self, event):
         '''Respond to keypresses.'''
         if event.key == pygame.K_RIGHT: # Checks if the right arrow key was pressed.
@@ -128,7 +135,7 @@ class SpaceShooter:
                     self.scoreboard.check_high_score() # Checks if the score is a new high score.
                     self._speed_up() # Speeds up the game if the a new level is reached.
                 except ValueError:
-                    #Displays an error if bullets list does not contain the bullet.
+                    # Displays an error if bullets list does not contain the bullet.
                     print('Bullets list does not contain bullet.')
 
     def _speed_up(self):
@@ -158,6 +165,7 @@ class SpaceShooter:
             sleep(0.5) # Pause the game for 0.5 seconds.
         else:
             self.stats.game_active = False # Sets the game to an inactive state.
+            self.stats.game_over = True # Sets the game over flag to True.
             pygame.mouse.set_visible(True) # Make the mouse cursor visble when the game is not active.
 
     def _check_ship_alien_collision(self):
@@ -264,7 +272,7 @@ class SpaceShooter:
 
     def _update_screen(self):
         '''Redraws each frame of the screen.''' 
-        if self.stats.game_active: # Checks if the game is active.
+        if self.stats.game_active and not self.stats.game_over: # Checks if the game is active and the game is not over.
             self.screens.draw_background() # Draws the game background.
 
             for bullet in self.bullets: # Loops through each bullet.
@@ -277,12 +285,14 @@ class SpaceShooter:
                 alien.draw() # Draw alien.
 
             for alien_bullet in self.alien_bullets: # Loops through each bullet shot by the alien.
-                alien_bullet.draw() # Draws alienbullet.
+                alien_bullet.draw() # Draws alien bullet.
 
             self.ship.draw() # Draw ship.
             self.scoreboard.show_score() # Draw score, high score, level and lives.
+        elif not self.stats.game_active and self.stats.game_over: # Checks if the game is inactive and the game is over.
+            self.screens.draw_game_over_screen() # Draws the game over screen when there are no more ships left.
         else:
-            self.screens.draw_start_screen() # Draw start screen of game.
+            self.screens.draw_start_screen() # Draw the start screen of the game when the game is first launched.
 
         pygame.display.flip() # Display the current frame on the screen.
         self.clock.tick(self.settings.FPS) # Limits the screen to 60 frames per second.

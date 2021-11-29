@@ -9,7 +9,7 @@ class Bullet:
 		self.ship = game.ship # Access the ship from the game.
 		self.settings = game.settings # Accesses the game settings.
  
-		self.image = pygame.image.load('assets/images/bullet.png') # Loads the bullet image.
+		self.image = pygame.image.load('assets/images/player/bullet.png') # Loads the bullet image.
 		self.rect = self.image.get_rect() # Obtains the rect for the bullet image.
 
 		self.rect.x = (self.ship.rect.left + self.ship.rect.right) / 2 # Starting horizontal position of bullet (center of ship)
