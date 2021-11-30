@@ -14,7 +14,7 @@ class Settings:
 		self.bullets_allowed = 3 # Bullets allowed.
 
 		self.alien_probability = 100 # Chance of alien spawning is 1/100 per frame.
-		self.alien_bullet_probability = 400 # Chance of an alien shooting a bullet is 1/400 per frame.
+		self.alien_bullet_probability = 400 # Chance of an alien shooting a bullet is 1/500 per frame.
 		self.asteroid_probability = 500 # Chance of an asteroid spawning is 1/400 per frame.
 
 		self.speedup_scale = 1.1 # Speed up factor for each level.

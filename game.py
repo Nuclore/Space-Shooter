@@ -8,9 +8,9 @@ from settings import Settings
 from game_stats import GameStats
 from scoreboard import Scoreboard
 from screens import Screens
-from ship import Ship
-from bullet import Bullet
+from player import Ship, Bullet
 from enemy import Alien, AlienBullet, Asteroid
+from explosion import Explosion
 
 class SpaceShooter:
     '''Overall class to manage the game.'''
@@ -35,8 +35,9 @@ class SpaceShooter:
         self.aliens = [] # List to store aliens.
         self.alien_bullets = [] # List to store bullets shot by aliens.
         self.asteroids = [] # List to store asteroids.
+        self.explosions = [] # List to store explosions.
 
-        self.screens = Screens(self) # Creates an instance to display the start screen and background.
+        self.screens = Screens(self) # Creates an instance to display the start screen, game over screen and background.
 
     def run_game(self):
         '''Starts game loop.'''
@@ -66,6 +67,7 @@ class SpaceShooter:
         self.aliens.clear() # Empties the aliens list.
         self.bullets.clear() # Empties the bullets list.
         self.asteroids.clear() # Empties the asteroids list.
+        self.explosions.clear() # Empties the list explosions list.
         self.alien_bullets.clear() # Empties the alien bullets list.
         self.ship.center_ship() # Centers the ship.
 
@@ -128,6 +130,10 @@ class SpaceShooter:
         for alien in self.aliens: # Loops through each alien in the list.
             if pygame.Rect.colliderect(bullet.rect, alien.rect): # Checks if an alien is hit by a bullet.
                 try:
+                    # Creates an explosion instance, with the current instance and the center of the alien.
+                    explosion = Explosion(self, alien.rect.center) 
+                    self.explosions.append(explosion) # Adds the explosion to the explosions list.
+
                     self.aliens.remove(alien) # Remove any alien that have collided with the bullet.
                     self.bullets.remove(bullet) # Remove any bullet that have collided with the alien.
                     self.stats.score += self.settings.alien_points # Increments the score when an alien is shot.
@@ -159,6 +165,7 @@ class SpaceShooter:
             self.bullets.clear() # Empties the bullets list.
             self.alien_bullets.clear() # Empties the alien bullets list.
             self.asteroids.clear() # Empties the asteroids list.
+            self.explosions.clear() # Empties the list containing the explosions.
 
             self.ship.center_ship() # Recenter the ship.
 
@@ -194,6 +201,11 @@ class SpaceShooter:
         for asteroid in self.asteroids: # Loops through each asteroid.
             for bullet in self.bullets: # Loops through each bullet.
                 if pygame.Rect.colliderect(bullet.rect, asteroid.rect): # Checks if a bullet collides with the asteroid.
+
+                    # Creates an explosion instance, with the current instance and the center of the asteroid.
+                    explosion = Explosion(self, asteroid.rect.center)
+                    self.explosions.append(explosion) # Adds the explosion to the explosions list.
+
                     self.bullets.remove(bullet) # Removes the bullet.
                     self.asteroids.remove(asteroid) # Removes the asteroid.
                     self.stats.score += self.settings.asteroid_points # Increments the score when an asteroid is shot.
@@ -270,6 +282,17 @@ class SpaceShooter:
         self._check_bullet_asteroid_collision() # Checks if an asteroid is shot.
         self._check_asteroid_bottom() # Checks if an asteroid reaches the bottom of the screen.
 
+    def _draw_explosions(self):
+        '''Display each explosion on the screen.'''
+        for explosion in self.explosions: # Loops through each explosion.
+            # Checks if the explosion index does not equal to the length of the explosion images list.
+            if explosion.index != len(explosion.images):
+                explosion.update() # Switches to a new explosion frame.
+                explosion.draw() # Draw the explosion frame.
+            else:
+                # Removes the explosion if the index is equal to the length of the explosion images list.
+                self.explosions.remove(explosion) 
+
     def _update_screen(self):
         '''Redraws each frame of the screen.''' 
         if self.stats.game_active and not self.stats.game_over: # Checks if the game is active and the game is not over.
@@ -286,6 +309,8 @@ class SpaceShooter:
 
             for alien_bullet in self.alien_bullets: # Loops through each bullet shot by the alien.
                 alien_bullet.draw() # Draws alien bullet.
+
+            self._draw_explosions() # Draws explosions.
 
             self.ship.draw() # Draw ship.
             self.scoreboard.show_score() # Draw score, high score, level and lives.
