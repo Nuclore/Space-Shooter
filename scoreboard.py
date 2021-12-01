@@ -69,3 +69,4 @@ class Scoreboard:
 		if self.stats.score > self.stats.high_score: # Checks if current score is higher than high score.
 			self.stats.high_score = self.stats.score # Sets the high score to the current score.
 			self.prep_high_score() # Prepares high score.
+			self.stats.save_high_score() # Saves high score to a file.

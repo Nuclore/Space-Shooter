@@ -22,6 +22,8 @@ class Settings:
 		self.alien_points = 100 # How many points aliens are worth.
 		self.asteroid_points = 100 # How many points asteroids are worth. 
 
+		self.frame_duration = 60 # Duration of explosion frame in milliseconds.
+
 		self.initialize_dynamic_settings() # Initializes settings that will change during gameplay.
 
 	def initialize_dynamic_settings(self):

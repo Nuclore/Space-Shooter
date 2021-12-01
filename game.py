@@ -286,9 +286,9 @@ class SpaceShooter:
         '''Display each explosion on the screen.'''
         for explosion in self.explosions: # Loops through each explosion.
             # Checks if the explosion index does not equal to the length of the explosion images list.
-            if explosion.index != len(explosion.images):
-                explosion.update() # Switches to a new explosion frame.
-                explosion.draw() # Draw the explosion frame.
+            if explosion.index != len(explosion.explosion_images):
+                explosion.update() # Switches to a new explosion image.
+                explosion.draw() # Draw the explosion image.
             else:
                 # Removes the explosion if the index is equal to the length of the explosion images list.
                 self.explosions.remove(explosion) 
