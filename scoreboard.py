@@ -13,6 +13,12 @@ class Scoreboard:
 		self.text_color = (255, 255, 255) # Set text color to white.
 		self.font = pygame.font.SysFont(None, 62) # Creates a font with size 62.
 
+		self.ship_image = pygame.image.load('assets/images/player/ship.png') # Loads the ship image.
+		self.ship_rect = self.ship_image.get_rect() # Obtains the rect for the ship image.
+		self.ship_width = self.ship_rect.width # Returns the width of the ship image.
+		self.ship_height = self.ship_rect.height # Returns the height of the ship image.
+		self.spacing = 10 # Spacing between each ship image.
+
 		self.prep_score() # Prepares score.
 		self.prep_high_score() # Prepares high score.
 		self.prep_level() # Prepares level number.
@@ -48,21 +54,29 @@ class Scoreboard:
 		self.level_rect.top = self.score_rect.bottom + 10 # Level will be 10 pixels below score.
 
 	def prep_lives(self):
-		'''Converts the number of lives into an image to be displayed.'''
-		lives_str = f'Lives: {self.stats.ships_left}' # String containing number of lives.
-		self.lives_image = self.font.render(lives_str, True, self.text_color) # Create a lives image.
+		'''Converts the number of ships left, as ship images to be displayed at the top left corner of the screen.'''
+		self.ship_images = [] # List to store ship images.
+		self.ship_rects = [] # List to store ship rects.
 
-		# Sets the position of the number of lives to be displayed.
-		self.lives_rect = self.lives_image.get_rect() # Obtains the rect for the lives image.
-		self.lives_rect.right = self.score_rect.right # Lives will be assigned the same x value as score.
-		self.lives_rect.top = self.level_rect.bottom + 10 # Lives will be 10 pixels below level.
+		for number in range(self.stats.ships_left): # Loops through the number of lives.
+			image = pygame.image.load('assets/images/player/ship.png') # Load the ship image.
+			# Scales the ship image to half of its width, and half of its height.
+			scaled_image = pygame.transform.scale(image, (self.ship_width / 2, self.ship_height / 2)) 
+			self.ship_images.append(scaled_image) # Adds the scaled image to the list of ship images.
+
+			rect = image.get_rect() # Obtains the rect for the image.
+			rect.x = self.spacing + (number * ((rect.width / 2) + self.spacing)) # Horizontal position of the ship image.
+			rect.y = 20 # Vertical position of the ship image.
+			self.ship_rects.append(rect) # Add the rect to the list of ship rects.
 
 	def show_score(self):
 		'''Display the scores, level and lives on the screen.'''
 		self.window.blit(self.score_image, self.score_rect) # Draws the score.
 		self.window.blit(self.high_score_image, self.high_score_rect) # Draws the high score.
 		self.window.blit(self.level_image, self.level_rect) # Draws the level number.
-		self.window.blit(self.lives_image, self.lives_rect) # Draws the number of lives.
+
+		for image, rect in zip(self.ship_images, self.ship_rects): # Loops through each ship image and ship rect simulataneously.
+			self.window.blit(image, rect) # Draws the ship.
 
 	def check_high_score(self):
 		'''Sets a high score if current score is higher than previous high score.'''
